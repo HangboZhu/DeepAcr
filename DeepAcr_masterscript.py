@@ -89,7 +89,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
 
     parser.add_argument("-f", "--file", dest="filename",
-                    help="protein files to be read in", metavar="FILE")
+                    help="protein files to be read in(Fasta File)", metavar="FILE")
     parser.add_argument("-b", "--batch_size", dest="batch_size",
                     help="Batch size for training", type=int, default = 30)
     parser.add_argument("-d", "--data_path", dest="data_path",
