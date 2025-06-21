@@ -12,12 +12,7 @@ DeepAcr_masterscript.py has been tested with Python 3.7 To run it, we recommend 
 
 
 ```
-git clone git@github.com:BackofenLab/Acr.git
-
-OR 
-
-https://github.com/BackofenLab/Acr/archive/refs/heads/main.zip
-unzip main.zip
+git clone https://github.com/HangboZhu/DeepAcr.git
 
 ```
 
@@ -46,10 +41,12 @@ conda env create -f environment.yml -n DeepAcr-env
 conda activate DeepAcr-env
 ```
 ### Quick run with the default parameters
+- `<file>` Needs a Fasta Format File(You can input more fasta fila. Using `,` to split)
+- `<path_to_models>` A directory that contain two trained models which could be download [here](https://drive.google.com/drive/folders/10JgxPI-Z4DOMUTycrZM0_dYb_iP1yJES?usp=sharing)
+- `<path_to_data>` Where contain the Fasta File , default use `./` 
 
 ```
 python3.7 DeepAcr_masterscript -f <file> -m <path_to_models> -d <path_to_data>
- 
 
 ```
 ## Citation
