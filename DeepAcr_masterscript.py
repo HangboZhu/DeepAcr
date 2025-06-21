@@ -47,6 +47,7 @@ def evaluate_proteins(data, model_list, run_first, model_names, with_infos: bool
         predictions.append(values.tolist())
         model_val[model_num].extend(values.tolist())
 
+    print("Model Predictions' shape : ", np.array(predictions).shape)
     pred_v = np.mean(predictions, axis=0)
     pred = [1 if o > 0.5 else 0 for o in pred_v]
     append_string = "_with_infos" if with_infos else ""
@@ -59,8 +60,8 @@ def evaluate_proteins(data, model_list, run_first, model_names, with_infos: bool
     dataframe['ensamble_' + model_names[0]  + append_string] =  pred
     dataframe[model_names[0] + append_string+ "_positive_prediction" ] = [o[0] for o in pred_v]
     dataframe[model_names[0] + append_string+"_negative_prediction" ] = [1 - o[0] for o in pred_v]
-
-
+    
+    # dataframe.head()
     
     
     return dataframe
@@ -92,7 +93,7 @@ if __name__ == '__main__':
     parser.add_argument("-b", "--batch_size", dest="batch_size",
                     help="Batch size for training", type=int, default = 30)
     parser.add_argument("-d", "--data_path", dest="data_path",
-                    help="path of the data", default = "./")
+                    help="path of the data(Just Mean Where the Fasta File In!!!)", default = "./")
     parser.add_argument("-m", "--model_path", dest="model_path",
                     help="path of the models", default = "./models")
     parser.add_argument("-p", "--prediction_path", dest="prediction_path",
@@ -155,13 +156,13 @@ if __name__ == '__main__':
         frames = []
 
         for model_names in model_names_list:
-            print(model_names)
+            print(model_names) # ["LSTM","LSTM", "LSTM"]
             run_first = True
 
             checkpoint_list = []
 
             for model_num, model_name in enumerate(model_names):
-                checkpoint = models_dict[infos][model_name + "_" + str(model_num)]
+                checkpoint = models_dict[infos][model_name + "_" + str(model_num)] # 每个模型有三个，以LSTM为例子，LSTM_0, LSTM_1, LSTM_2的参数
                 max = checkpoint["data_max"]
                 max_length = checkpoint["data_max_length"]
                 checkpoint_list.append(checkpoint)
@@ -177,7 +178,7 @@ if __name__ == '__main__':
 
             for checkpoint in checkpoint_list:
 
-                type_name = str(checkpoint["model_type"]).split(" ")[1].split(".")[1]
+                type_name = str(checkpoint["model_type"]).split(" ")[1].split(".")[1] # LSTMb
                 type_name = str(type_name) + "a" if type_name[-1] != "b" else type_name
                 model = functions[type_name](database.num_features, max_length).to(device)
                 model.load_state_dict(checkpoint["model"])
@@ -210,12 +211,14 @@ if __name__ == '__main__':
         """
         
     result = pd.concat(result_list, axis=1)
+    # result.to_csv("./test.csv", index=False)
+    # print(result.head())
     
 
 
     ensemble_predictions = []
     #for "ensamble*" in result.keys():
-    keys = list(filter(lambda x: x.startswith("ensamble"), result))
+    keys = list(filter(lambda x: x.startswith("ensamble"), result)) # 得到所有以"ensamble"开头的列名
     
     
     ensemble_predictions =  [result[k].tolist() for k in keys]
@@ -230,15 +233,20 @@ if __name__ == '__main__':
     resut_df_negative = pd.DataFrame()
         
                 
-    only_positive_predictions = [np.max([ensemble_predictions[l][i] for l in range(len(ensemble_predictions)) ]) for i in range(len(ensemble_predictions[0]))]
+    only_positive_predictions = [
+        np.max([ensemble_predictions[l][i] for l in range(len(ensemble_predictions)) ]) for i in range(len(ensemble_predictions[0]))
+        ]# 取每个蛋白质的ensemble预测结果中最大的值，作为正预测结果的概率==> 说人话就是，只要模型的预测结果中有一个模型认为是正的，那么这个蛋白质就被认为是正的
         
 
 
-    only_best_0_prediction = [np.max([ensemble_pred1[l][i] for l in range(len(ensemble_pred1)) ]) for i in range(len(ensemble_pred1[0]))]
-    only_best_1_prediction = [np.max([ensemble_pred0[l][i] for l in range(len(ensemble_pred0)) ]) for i in range(len(ensemble_pred0[0]))]
+    only_best_0_prediction = [np.max([ensemble_pred1[l][i] for l in range(len(ensemble_pred1)) ]) for i in range(len(ensemble_pred1[0]))] # 针对负样本预测的，集成的预测里有一个是，他就是了
+    only_best_1_prediction = [np.max([ensemble_pred0[l][i] for l in range(len(ensemble_pred0)) ]) for i in range(len(ensemble_pred0[0]))] # 针对正样本预测的，集成的预测里有一个是，他就是了
         
         
-    best_prediction = [only_best_1_prediction[enum] if x == 1 else only_best_0_prediction[enum] for enum, x in enumerate(only_positive_predictions)]
+    best_prediction = [
+        only_best_1_prediction[enum] if x == 1 else only_best_0_prediction[enum] 
+        for enum, x in enumerate(only_positive_predictions)
+        ] # 首先判断ensemble的这个结果，如果他判断是正的，那么就取positive_prediction的一个概率，否则取negative_prediction的一个概率
         
 
         
